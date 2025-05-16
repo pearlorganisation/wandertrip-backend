@@ -3,7 +3,10 @@ import OTP from "../../models/otp/otp.model.js";
 import User from "../../models/users/user.model.js";
 import ApiError from "../../utils/error/ApiError.js";
 import { asyncHandler } from "../../utils/error/asyncHandler.js";
-import { sendRegistrationOTPOnMail } from "../../utils/mail/emailTemplate.js";
+import {
+  sendPasswordResetOTPOnMail,
+  sendRegistrationOTPOnMail,
+} from "../../utils/mail/emailTemplate.js";
 import { generateOTP } from "../../utils/otpUtils.js";
 
 export const signup = asyncHandler(async (req, res, next) => {
@@ -92,6 +95,83 @@ export const login = asyncHandler(async (req, res, next) => {
       message: "Login Successfull",
       // user: sanitizedUser,
     });
+});
+
+export const logout = asyncHandler(async (req, res, next) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { $unset: { refreshToken: 1 } },
+      { new: true }
+    );
+
+    // Check if user was found
+    if (!user) {
+      return next(new ApiErrorResponse("User not found", 404)); // Return 404 if no user found
+    }
+
+    res
+      .cookie("access_token", "", { ...COOKIE_OPTIONS, maxAge: 0 })
+      .cookie("refresh_token", "", { ...COOKIE_OPTIONS, maxAge: 0 })
+      .status(200)
+      .json({ success: true, message: "Logout successfully!" });
+  } catch (error) {
+    console.log(`Error in logout: ${error.message}`);
+    return next(new ApiErrorResponse("Error in logout", 500));
+  }
+});
+
+export const forgotPassword = asyncHandler(async (req, res, next) => {
+  const { email } = req.body;
+  if (!email) {
+    return next(new ApiError("Email is required.", 400));
+  }
+  const existingUser = await User.findOne({ email });
+
+  if (!existingUser) return next(new ApiError("User not found.", 400));
+
+  if (!existingUser.isVerified) {
+    return next(
+      new ApiError("Please verify your email before resetting password.", 403)
+    );
+  }
+  const otp = generateOTP();
+  await sendPasswordResetOTPOnMail(email, {
+    fullName: existingUser.fullName,
+    otp,
+  });
+  await OTP.findOneAndReplace(
+    { email, type: "FORGOT_PASSWORD" },
+    { otp, email, type: "FORGOT_PASSWORD" },
+    { upsert: true, new: true } // upsert: Creates a new document if no match is found., new: returns updated doc
+  );
+  return res.status(200).json({
+    success: true,
+    message: "OTP sent for password reset to your email.",
+  });
+});
+
+export const resetPassword = asyncHandler(async (req, res, next) => {
+  const { email, newPassword, confirmNewPassword } = req.body;
+  if (!email || !newPassword || !confirmNewPassword) {
+    return next(new ApiError("All fields are required", 400));
+  }
+
+  if (newPassword !== confirmNewPassword) {
+    return next(new ApiError("Passwords do not match", 400));
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    return next(new ApiError("User not found!", 401));
+  }
+
+  user.password = newPassword;
+  await user.save();
+
+  return res
+    .status(200)
+    .json({ success: true, message: "Password reset successfully." });
 });
 
 export const verifyOTP = asyncHandler(async (req, res, next) => {

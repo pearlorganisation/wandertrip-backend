@@ -26,7 +26,7 @@ export const sendMail = async (to, subject, templateName, data) => {
   });
   // Email options
   const mailOptions = {
-    from: `R2M <${process.env.NODEMAILER_EMAIL_USER}>`,
+    from: `Wander Trip <${process.env.NODEMAILER_EMAIL_USER}>`,
     to,
     subject,
     html,

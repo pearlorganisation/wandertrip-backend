@@ -8,6 +8,7 @@ import {
   sendRegistrationOTPOnMail,
 } from "../../utils/mail/emailTemplate.js";
 import { generateOTP } from "../../utils/otpUtils.js";
+import jwt from "jsonwebtoken";
 
 export const signup = asyncHandler(async (req, res, next) => {
   const { email, fullName } = req?.body;
@@ -52,7 +53,7 @@ export const signup = asyncHandler(async (req, res, next) => {
 export const login = asyncHandler(async (req, res, next) => {
   const { email, password } = req?.body;
   if (!email || !password) {
-    return next(new ApiError("All fields are required", 400));
+    return next(new ApiError("All fields are required.", 400));
   }
   const existingUser = await User.findOne({ email });
   if (!existingUser) return next(new ApiError("User not found", 400));
@@ -67,7 +68,7 @@ export const login = asyncHandler(async (req, res, next) => {
   const isValidPassword = await existingUser.isPasswordCorrect(password);
 
   if (!isValidPassword) {
-    return next(new ApiError("Wrong password", 400));
+    return next(new ApiError("Wrong password.", 400));
   }
 
   const access_token = existingUser.generateAccessToken();
@@ -92,7 +93,7 @@ export const login = asyncHandler(async (req, res, next) => {
     .status(200)
     .json({
       success: true,
-      message: "Login Successfull",
+      message: "Login Successfull.",
       // user: sanitizedUser,
     });
 });
@@ -211,4 +212,49 @@ export const verifyOTP = asyncHandler(async (req, res, next) => {
     message,
     action,
   });
+});
+
+export const refreshAccessToken = asyncHandler(async (req, res, next) => {
+  const clientRefreshToken = req.cookies.refresh_token;
+  if (!clientRefreshToken) {
+    return next(new ApiError("Session expired. Please log in again", 403)); // Expired or Invalid Refresh Token. force the user to log out in front end and login again
+  }
+
+  try {
+    const decoded = jwt.verify(
+      clientRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+
+    const user = await User.findById(decoded._id);
+    if (!user || clientRefreshToken !== user.refreshToken) {
+      // Token mismatch or user not found, clear the cookies
+      res.clearCookie("access_token");
+      res.clearCookie("refresh_token");
+      return next(new ApiError("Refresh token is expired", 401));
+    }
+
+    const access_token = user.generateAccessToken();
+    const refresh_token = user.generateRefreshToken(); // User will be logged in for longer time. will logout only when it logged out.
+
+    user.refreshToken = refresh_token;
+    await user.save({ validateBeforeSave: false });
+
+    return res
+      .status(200)
+      .cookie("access_token", access_token, {
+        ...COOKIE_OPTIONS,
+        expires: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // 1 day
+      })
+      .cookie("refresh_token", refresh_token, {
+        ...COOKIE_OPTIONS,
+        expires: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 days
+      })
+      .json({ success: true, message: "Tokens refreshed successfully" });
+  } catch (error) {
+    // Catch JWT verification error and clear cookies
+    res.clearCookie("access_token");
+    res.clearCookie("refresh_token");
+    return next(new ApiErrorResponse("Invalid refresh token", 401));
+  }
 });

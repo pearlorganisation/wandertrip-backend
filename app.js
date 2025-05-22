@@ -43,7 +43,7 @@ app.get("/", (req, res) => {
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/destinations", destinationRouter);
-app.use("/api/v1/reviews", reviewRouter); // change it to ratings
+app.use("/api/v1/reviews", reviewRouter); 
 
 app.use(notFound);
 app.use(errorHandler);

@@ -33,6 +33,7 @@ app.use(morgan("dev"));
 import authRouter from "./src/routes/auth/auth.routes.js";
 import userRouter from "./src/routes/users/user.routes.js";
 import destinationRouter from "./src/routes/destinations/destination.routes.js";
+import reviewRouter from "./src/routes/review/review.routes.js";
 
 app.get("/", (req, res) => {
   res.status(200).send("APIs are working...");
@@ -42,6 +43,7 @@ app.get("/", (req, res) => {
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/destinations", destinationRouter);
+app.use("/api/v1/reviews", reviewRouter); // change it to ratings
 
 app.use(notFound);
 app.use(errorHandler);

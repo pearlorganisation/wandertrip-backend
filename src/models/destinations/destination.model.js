@@ -3,13 +3,13 @@ import mongoose from "mongoose";
 const destinationSchema = new mongoose.Schema(
   {
     name: { type: String, unique: true, required: true, trim: true },
-    // slug: { type: String, unique: true, required: true, trim: true },
-    // country: { type: String, required: true },
-    // tags: { type: [String], default: [] },
-    // description: { type: String, required: true },
-    // banner: { type: String, required: true },
-    // image: { type: String, required: true },
+    slug: { type: String, unique: true, required: true, trim: true },
+    country: { type: String, required: true },
+    description: { type: String, required: true },
     imageKey: { type: String, required: true },
+    bannerKey: { type: String, required: true },
+    averageRating: { type: Number, min: 0, max: 5, default: 0 },
+    numberOfRatings: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

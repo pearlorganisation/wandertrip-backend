@@ -10,11 +10,13 @@ import { asyncHandler } from "../../utils/error/asyncHandler.js";
 export const createDestination = asyncHandler(async (req, res, next) => {
   console.log("req files: ", req.files);
   const imageFile = req.files.image[0];
+  const bannerFile = req.files.banner[0];
   const image = await uploadToS3(imageFile, "destinations/image");
+  const banner = await uploadToS3(bannerFile, "destinations/banner");
   const destination = await Destination.create({
-    name: req.body.name,
-    //     image: image.url,
+    ...req.body,
     imageKey: image.key,
+    bannerKey: banner.key,
   });
   res.status(201).json(destination);
 });

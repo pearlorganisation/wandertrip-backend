@@ -4,7 +4,7 @@ export const paginate = async (
   model,
   page = 1,
   limit = 5,
-  filter = {}, // Optional filter parameter
+  filter = {}, 
   populateOptions = [],
   sortField = { createdAt: -1 },
   fields = ""

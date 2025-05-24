@@ -18,7 +18,14 @@ export const createDestination = asyncHandler(async (req, res, next) => {
     imageKey: image.key,
     bannerKey: banner.key,
   });
-  res.status(201).json(destination);
+  if (!destination) {
+    return next(new ApiError("Failed to create destination", 400));
+  }
+  res.status(201).json({
+    success: ture,
+    message: "Destination created successfully.",
+    data: destination,
+  });
 });
 
 export const getAllDestinations = asyncHandler(async (req, res, next) => {
@@ -48,5 +55,54 @@ export const deleteDestinationById = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     message: "Destination deleted successfully",
+  });
+});
+
+export const updateDestinationBySlug = asyncHandler(async (req, res, next) => {
+  const { slug } = req.params;
+  const { image, banner } = req.files;
+
+  const existingDestination = await Destination.findOne({
+    slug,
+  });
+
+  if (!existingDestination) {
+    return next(new ApiError("Destination not found", 404));
+  }
+
+  let imageResponse;
+  let bannerResponse;
+
+  if (image?.[0]) {
+    imageResponse = await uploadToS3(image[0], "destinations/image");
+  }
+  if (banner?.[0]) {
+    bannerResponse = await uploadToS3(banner[0], "destinations/banner");
+  }
+  const updatedDestination = await Destination.findOneAndUpdate(
+    { slug },
+    { ...req.body, imageKey: imageResponse.key, bannerKey: bannerResponse.key },
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
+
+  if (!updatedDestination) {
+    return next(new ApiError("Failed to update destination", 400));
+  }
+
+  // 4. Only now delete old S3 objects
+  const deletes = [];
+  if (newImageKey && existing.imageKey)
+    deletes.push(deleteFromS3(existing.imageKey));
+  if (newBannerKey && existing.bannerKey)
+    deletes.push(deleteFromS3(existing.bannerKey));
+  await Promise.all(deletes);
+
+  res.status(200).json({
+    success: true,
+    message: "Destination updated successfully",
+    data: updatedDestination,
   });
 });

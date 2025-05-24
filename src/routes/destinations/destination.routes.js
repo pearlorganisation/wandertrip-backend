@@ -4,6 +4,7 @@ import {
   createDestination,
   deleteDestinationById,
   getAllDestinations,
+  updateDestinationBySlug,
 } from "../../controllers/destinations/destination.controller.js";
 
 const router = express.Router();
@@ -15,9 +16,17 @@ router
       { name: "banner", maxCount: 1 },
       { name: "image", maxCount: 1 },
     ]),
-    createDestination
+    createDestination // add auth middleware
   )
   .get(getAllDestinations);
+
+router.route("/:slug").patch(
+  upload.fields([
+    { name: "banner", maxCount: 1 },
+    { name: "image", maxCount: 1 },
+  ]),
+  updateDestinationBySlug
+);
 
 router.route("/:id").delete(deleteDestinationById);
 

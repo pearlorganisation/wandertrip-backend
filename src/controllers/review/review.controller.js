@@ -38,8 +38,8 @@ export const getAllReviews = asyncHandler(async (req, res, next) => {
   // Use the pagination utility function
   const { data: reviews, pagination } = await paginate(
     Review,
-    page,
-    limit,
+    parseInt(page),
+    parseInt(limit),
     filter,
     [
       { path: "destination" },

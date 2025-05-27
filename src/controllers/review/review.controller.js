@@ -24,6 +24,8 @@ export const getAllReviews = asyncHandler(async (req, res, next) => {
     case "highest":
       sortBy = { rating: -1 }; // Highest rating first
       break;
+    case "lowest":
+      sortBy = { rating: 1 };
     case "newest":
       sortBy = { createdAt: -1 }; // Newest first
       break;

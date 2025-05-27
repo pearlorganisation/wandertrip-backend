@@ -17,6 +17,8 @@ app.use(
             "http://localhost:3001",
             "http://localhost:5173",
             "http://localhost:5174",
+            "http://localhost:5175",
+            "http://localhost:5000",
           ]
         : "*",
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"], // Specify allowed HTTP methods
@@ -43,7 +45,7 @@ app.get("/", (req, res) => {
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/destinations", destinationRouter);
-app.use("/api/v1/reviews", reviewRouter); 
+app.use("/api/v1/reviews", reviewRouter);
 
 app.use(notFound);
 app.use(errorHandler);

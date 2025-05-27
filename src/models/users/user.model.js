@@ -36,6 +36,10 @@ const userSchema = new mongoose.Schema(
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{8,}$/,
         "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, and one special character",
       ],
+      required: function () {
+        // only require a password if the user has no oauthAccounts
+        return this.oauthAccounts == null || this.oauthAccounts.length === 0;
+      },
     },
     role: {
       type: String,
@@ -44,6 +48,16 @@ const userSchema = new mongoose.Schema(
     },
     isVerified: { type: Boolean, default: false },
     refreshToken: { type: String },
+    oauthAccounts: [
+      {
+        provider: {
+          type: String,
+          enum: ["GOOGLE"],
+          required: true,
+        },
+        oauthSub: { type: String, required: true },
+      },
+    ],
   },
   { timestamps: true }
 );
@@ -67,7 +81,7 @@ userSchema.methods.generateAccessToken = function () {
     {
       _id: this._id,
       email: this.email,
-      name: this.name,
+      fulName: this.fulName,
       role: this.role,
     },
     process.env.ACCESS_TOKEN_SECRET,

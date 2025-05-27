@@ -1,4 +1,12 @@
-import { COOKIE_OPTIONS } from "../../../constants.js";
+import { decodeIdToken, generateCodeVerifier, generateState } from "arctic";
+import {
+  COOKIE_OPTIONS,
+  OAUTH_EXCHANGE_EXPIRY,
+  ACCESS_TOKEN_EXPIRY,
+  REFRESH_TOKEN_EXPIRY,
+} from "../../../constants.js";
+import { FRONTEND_URL } from "../../config/index.js";
+import { google } from "../../config/oauth.js";
 import OTP from "../../models/otp/otp.model.js";
 import User from "../../models/users/user.model.js";
 import ApiError from "../../utils/error/ApiError.js";
@@ -257,4 +265,124 @@ export const refreshAccessToken = asyncHandler(async (req, res, next) => {
     res.clearCookie("refresh_token");
     return next(new ApiErrorResponse("Invalid refresh token", 401));
   }
+});
+
+export const googleAuth = asyncHandler(async (req, res, next) => {
+  const state = generateState(); // Save to DB/session if you plan to validate
+  const codeVerifier = generateCodeVerifier();
+  const url = google.createAuthorizationURL(state, codeVerifier, [
+    "openid",
+    "profile",
+    "email",
+  ]);
+  res.cookie("google_oauth_state", state, {
+    ...COOKIE_OPTIONS,
+    maxAge: OAUTH_EXCHANGE_EXPIRY, // 15min
+  });
+  res.cookie("google_code_verifier", codeVerifier, {
+    ...COOKIE_OPTIONS,
+    maxAge: OAUTH_EXCHANGE_EXPIRY, //15min
+  });
+
+  res.redirect(url.toString());
+});
+
+export const googleAuthCallback = asyncHandler(async (req, res, next) => {
+  console.log("inside googleAuthCallback");
+  const { code, state } = req.query;
+  console.log("query", req.query);
+  // const { google_oauth_state, google_code_verifier } = req.cookies;
+  // console.log("cookies", req.cookies);
+
+  const google_oauth_state = "efbjsSbla1adhK2NEFfx-Bz5NvEpRzKdF3OckcY73XM";
+  const google_code_verifier = "E3LZiuhMDFmRbyS3AXPhRy2mixuC36K1V-qCCdnsQEQ";
+  if (
+    !code ||
+    !state ||
+    !google_oauth_state ||
+    !google_code_verifier ||
+    state !== google_oauth_state
+  ) {
+    return next(
+      new ApiError(
+        "Couldn't login with Google because with invalid login attempt. Please try agian!",
+        400
+      )
+    );
+    // return res.redirect("/login");
+  }
+
+  let tokens;
+
+  try {
+    tokens = await google.validateAuthorizationCode(code, google_code_verifier);
+    console.log("Tokens received:", tokens);
+  } catch (error) {
+    console.error("Error getting tokens:", error);
+    return next(
+      new ApiError("Failed to get tokens from Google. Please try again.", 500)
+    );
+    // /login
+  }
+
+  const claims = decodeIdToken(tokens.data.id_token);
+  console.log("Decoded claims:", claims);
+  const { sub: googleUserId, name, email, email_verified } = claims;
+
+  // 1. User already exists wiht googleId
+  // 2. If user does not exist, create a new user with googleId
+  // 3. user already exists with email, but google auth is not linked
+
+  let user = await User.findOne({
+    oauthAccounts: {
+      $elemMatch: { provider: "GOOGLE", oauthSub: googleUserId },
+    },
+  });
+  if (!user) {
+    console.log("User not found with Google ID:");
+    // User not found with Google ID
+    //If no user with googleUserId, find user by email to link Google account
+    user = await User.findOne({ email });
+    if (user) {
+      // Check if Google account is already linked
+      const hasGoogle = user.oauthAccounts.some(
+        (acc) => acc.provider === "GOOGLE" && acc.oauthSub === googleUserId
+      );
+      if (!hasGoogle) {
+        // Link Google OAuth account
+        user.oauthAccounts.push({ provider: "GOOGLE", oauthSub: googleUserId });
+        await user.save();
+      }
+    } else {
+      // user is not register and try to login with google
+      user = await User.create({
+        fullName: name || "Google User", // Default name if not provided
+        email,
+        oauthAccounts: [{ provider: "GOOGLE", oauthSub: googleUserId }],
+        isVerified: email_verified,
+      });
+    }
+  }
+
+  const access_token = user.generateAccessToken();
+  const refresh_token = user.generateRefreshToken();
+
+  res
+    .cookie("access_token", access_token, {
+      ...COOKIE_OPTIONS,
+      maxAge: ACCESS_TOKEN_EXPIRY, // 1 day
+    })
+    .cookie("refresh_token", refresh_token, {
+      ...COOKIE_OPTIONS,
+      maxAge: REFRESH_TOKEN_EXPIRY, // 15 days
+    });
+
+  res.clearCookie("google_oauth_state", { ...COOKIE_OPTIONS, maxAge: 0 });
+  res.clearCookie("google_code_verifier", { ...COOKIE_OPTIONS, maxAge: 0 });
+  // res.status(200).json({
+  //   success: true,
+  //   message: "Google authentication successful.",
+  //   user, // Return the user object if needed
+  // });
+  res.redirect(`${FRONTEND_URL}/profile`);
 });

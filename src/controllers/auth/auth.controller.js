@@ -291,11 +291,11 @@ export const googleAuthCallback = asyncHandler(async (req, res, next) => {
   console.log("inside googleAuthCallback");
   const { code, state } = req.query;
   console.log("query", req.query);
-  // const { google_oauth_state, google_code_verifier } = req.cookies;
-  // console.log("cookies", req.cookies);
+  const { google_oauth_state, google_code_verifier } = req.cookies;
+  console.log("cookies", req.cookies);
 
-  const google_oauth_state = "efbjsSbla1adhK2NEFfx-Bz5NvEpRzKdF3OckcY73XM";
-  const google_code_verifier = "E3LZiuhMDFmRbyS3AXPhRy2mixuC36K1V-qCCdnsQEQ";
+  // const google_oauth_state = "efbjsSbla1adhK2NEFfx-Bz5NvEpRzKdF3OckcY73XM";
+  // const google_code_verifier = "E3LZiuhMDFmRbyS3AXPhRy2mixuC36K1V-qCCdnsQEQ";
   if (
     !code ||
     !state ||

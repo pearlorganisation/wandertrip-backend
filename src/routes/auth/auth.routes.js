@@ -9,6 +9,7 @@ import {
   verifyOTP,
   googleAuth,
   googleAuthCallback,
+  resendOTP,
 } from "../../controllers/auth/auth.controller.js";
 import { authenticateToken } from "../../middlewares/auth.middleware.js";
 
@@ -21,7 +22,7 @@ router.route("/refresh-token").post(refreshAccessToken);
 router.route("/forgot-password").post(forgotPassword); //forgot password-> verify otp -> reset password
 router.route("/reset-password").post(resetPassword);
 router.route("/verify-otp").post(verifyOTP);
-// router.route("/resend-otp").post();
+router.route("/resend-otp").post(resendOTP);
 router.route("/google").get(googleAuth);
 router.route("/google/callback").get(googleAuthCallback); // Google OAuth callback
 

@@ -222,6 +222,63 @@ export const verifyOTP = asyncHandler(async (req, res, next) => {
   });
 });
 
+export const resendOTP = asyncHandler(async (req, res, next) => {
+  const { email, type } = req?.body;
+
+  if (!email || !type) {
+    return next(new ApiError("Email and type are required.", 400));
+  }
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    return next(new ApiError("User not found!", 404));
+  }
+
+  const otp = generateOTP();
+
+  try {
+    if (type === "REGISTER") {
+      await sendRegistrationOTPOnMail(email, { fullName: user.fullName, otp });
+
+      // Replacing the old OTP document with a new one (to reset TTL)
+      await OTP.findOneAndReplace(
+        { email, type },
+        { otp, email, type },
+        { upsert: true, new: true } // upsert: Creates a new document if no match is found., new: returns updated doc
+      );
+
+      res.status(200).json({
+        success: true,
+        message: "OTP resent successfully. Please verify your email.",
+      });
+    } else if (type === "FORGOT_PASSWORD") {
+      if (!user.isVerified) {
+        return next(
+          new ApiError(
+            "Please verify your email before resetting password.",
+            403
+          )
+        );
+      }
+      await sendPasswordResetOTPOnMail(email, { name: user.name, otp });
+      await OTP.findOneAndReplace(
+        { email, type: "FORGOT_PASSWORD" },
+        { otp, email, type: "FORGOT_PASSWORD" },
+        { upsert: true, new: true } // upsert: Creates a new document if no match is found., new: returns updated doc
+      );
+      return res.status(200).json({
+        success: true,
+        message: "OTP sent for password reset to your email.",
+      });
+    } else {
+      return next(new ApiError("Invalid OTP type", 400));
+    }
+  } catch (error) {
+    console.log("ERROR Sending mail: ", error);
+    return next(new ApiError(`Failed to send OTP: ${error.message}`, 400));
+  }
+});
+
 export const refreshAccessToken = asyncHandler(async (req, res, next) => {
   const clientRefreshToken = req.cookies.refresh_token;
   if (!clientRefreshToken) {

@@ -1,6 +1,43 @@
 import User from "../../models/users/user.model.js";
 import ApiError from "../../utils/error/ApiError.js";
 import { asyncHandler } from "../../utils/error/asyncHandler.js";
+import { paginate } from "../../utils/pagination.js";
+
+export const getAllUsers = asyncHandler(async (req, res, next) => {
+  const { page = 1, limit = 10, roles } = req.query;
+  const { search } = req.query;
+  let filter = {
+    _id: { $ne: req.user._id }, // Exclude the current user.
+  };
+  if (search) {
+    filter.$or = [
+      { fullName: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  const { data: users, pagination } = await paginate(
+    User,
+    parseInt(page),
+    parseInt(limit),
+    filter
+  );
+
+  if (!users || users.length === 0) {
+    return res.status(200).json({
+      success: true,
+      message: "No users found.",
+      data: [],
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "Fetched all Users successfully",
+    pagination,
+    data: users,
+  });
+});
 
 export const changePassword = asyncHandler(async (req, res, next) => {
   const { currentPassword, newPassword, confirmNewPassword } = req.body;

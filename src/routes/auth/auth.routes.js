@@ -23,7 +23,7 @@ router.route("/forgot-password").post(forgotPassword); //forgot password-> verif
 router.route("/reset-password").post(resetPassword);
 router.route("/verify-otp").post(verifyOTP);
 router.route("/resend-otp").post(resendOTP);
-router.route("/google").get(googleAuth);
+router.route("/google").get(googleAuth); //Get google login page
 router.route("/google/callback").get(googleAuthCallback); // Google OAuth callback
 
 export default router;

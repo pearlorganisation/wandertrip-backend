@@ -11,6 +11,16 @@ export const USER_ROLES_ENUM = {
   ADMIN: "ADMIN",
 };
 
+export const DESTINATION_CATEGORIES_ENUM = [
+  "BEACH",
+  "MOUNTAINS",
+  "CITIES",
+  "CULTURAL",
+  "ADVENTURE",
+  "LUXURY",
+  "HIDDEN GEMS",
+];
+
 const SECONDS_PER_MINUTE = 60;
 const MINUTES_PER_HOUR = 60;
 const HOURS_PER_DAY = 24;

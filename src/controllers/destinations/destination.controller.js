@@ -42,11 +42,22 @@ export const createDestination = asyncHandler(async (req, res, next) => {
 });
 
 export const getAllDestinations = asyncHandler(async (req, res, next) => {
-  const { page = 1, limit = 10 } = req.query;
+  const { page = 1, limit = 10, category, search } = req.query;
+  const filter = {
+    ...(category && { category: { $regex: `^${category}$`, $options: "i" } }),
+    ...(search && {
+      $or: [
+        { name: { $regex: search, $options: "i" } },
+        { country: { $regex: search, $options: "i" } },
+      ],
+    }),
+  };
+
   const { data: destinations, pagination } = await paginate(
     Destination,
     parseInt(page),
-    parseInt(limit)
+    parseInt(limit),
+    filter
   );
 
   const destinationsWithUrls = await Promise.all(

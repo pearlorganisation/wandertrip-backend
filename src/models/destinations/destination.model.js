@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { DESTINATION_CATEGORIES_ENUM } from "../../../constants.js";
 
 const destinationSchema = new mongoose.Schema(
   {
@@ -10,6 +11,11 @@ const destinationSchema = new mongoose.Schema(
     bannerKey: { type: String, required: true },
     averageRating: { type: Number, min: 0, max: 5, default: 0 },
     numberOfRatings: { type: Number, default: 0 },
+    category: {
+      type: String,
+      enum: DESTINATION_CATEGORIES_ENUM,
+      required: [true, "Category is required"],
+    }, //isfavorite
   },
   { timestamps: true }
 );

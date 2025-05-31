@@ -4,6 +4,7 @@ import {
   createDestination,
   deleteDestinationById,
   getAllDestinations,
+  getDestinationBySlug,
   updateDestinationBySlug,
 } from "../../controllers/destinations/destination.controller.js";
 
@@ -20,13 +21,16 @@ router
   )
   .get(getAllDestinations);
 
-router.route("/:slug").patch(
-  upload.fields([
-    { name: "banner", maxCount: 1 },
-    { name: "image", maxCount: 1 },
-  ]),
-  updateDestinationBySlug
-);
+router
+  .route("/:slug")
+  .patch(
+    upload.fields([
+      { name: "banner", maxCount: 1 },
+      { name: "image", maxCount: 1 },
+    ]),
+    updateDestinationBySlug
+  )
+  .get(getDestinationBySlug);
 
 router.route("/:id").delete(deleteDestinationById);
 

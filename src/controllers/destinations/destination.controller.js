@@ -159,3 +159,17 @@ export const updateDestinationBySlug = asyncHandler(async (req, res, next) => {
     return next(err);
   }
 });
+
+export const getDestinationBySlug = asyncHandler(async (req, res, next) => {
+  const destination = await Destination.findOne({ slug: req.params?.slug });
+
+  if (!destination) {
+    return next(new ApiError("Property not found", 404));
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "Destination found successfully",
+    data: destination,
+  });
+});

@@ -7,12 +7,14 @@ import {
   getDestinationBySlug,
   updateDestinationBySlug,
 } from "../../controllers/destinations/destination.controller.js";
+import { authenticateToken } from "../../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
 router
   .route("/")
   .post(
+    authenticateToken,
     upload.fields([
       { name: "banner", maxCount: 1 },
       { name: "image", maxCount: 1 },
@@ -24,6 +26,7 @@ router
 router
   .route("/:slug")
   .patch(
+    authenticateToken,
     upload.fields([
       { name: "banner", maxCount: 1 },
       { name: "image", maxCount: 1 },
@@ -32,6 +35,6 @@ router
   )
   .get(getDestinationBySlug);
 
-router.route("/:id").delete(deleteDestinationById);
+router.route("/:id").delete(authenticateToken, deleteDestinationById);
 
 export default router;

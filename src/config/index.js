@@ -14,6 +14,7 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI;
 const FRONTEND_URL = process.env.FRONTEND_URL;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 export {
   PORT,
@@ -29,4 +30,5 @@ export {
   GOOGLE_CLIENT_SECRET,
   GOOGLE_REDIRECT_URI,
   FRONTEND_URL,
+  OPENAI_API_KEY,
 };

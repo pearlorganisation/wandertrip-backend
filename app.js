@@ -40,6 +40,8 @@ import destinationRouter from "./src/routes/destinations/destination.routes.js";
 import reviewRouter from "./src/routes/review/review.routes.js";
 import tagRouter from "./src/routes/tags/tag.routes.js";
 import categoryRouter from "./src/routes/category/category.routes.js";
+import recommendationRouter from "./src/routes/recommendation/recommendation.routes.js";
+import { scheduleRecommendationRefresh } from "./src/jobs/refreshTravelRecommendations.jobs..js";
 
 app.get("/", (req, res) => {
   res.status(200).send("APIs are working...");
@@ -52,6 +54,9 @@ app.use("/api/v1/destinations", destinationRouter);
 app.use("/api/v1/reviews", reviewRouter);
 app.use("/api/v1/tags", tagRouter);
 app.use("/api/v1/categories", categoryRouter);
+app.use("/api/v1/recommendations", recommendationRouter);
+
+scheduleRecommendationRefresh();
 
 app.use(notFound);
 app.use(errorHandler);

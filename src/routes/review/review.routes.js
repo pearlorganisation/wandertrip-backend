@@ -9,10 +9,22 @@ import {
 
 const router = express.Router();
 
-router.route("/").post(authenticateToken, createReview).get(getAllReviews); // Get all review for admin.
+router
+  .route("/")
+  .post(authenticateToken, createReview)
+  .get(
+    authenticateToken,
+    verifyPermission([USER_ROLES_ENUM.ADMIN]),
+    getAllReviews
+  );
+
 router
   .route("/:reviewId")
   .patch(authenticateToken, updateReviewById)
-  .delete(authenticateToken, deleteReviewById);
+  .delete(
+    authenticateToken,
+    verifyPermission([USER_ROLES_ENUM.USER, USER_ROLES_ENUM.ADMIN]),
+    deleteReviewById
+  );
 
 export default router;

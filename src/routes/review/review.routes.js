@@ -1,11 +1,15 @@
 import express from "express";
-import { authenticateToken } from "../../middlewares/auth.middleware.js";
+import {
+  authenticateToken,
+  verifyPermission,
+} from "../../middlewares/auth.middleware.js";
 import {
   createReview,
   deleteReviewById,
   getAllReviews,
   updateReviewById,
 } from "../../controllers/review/review.controller.js";
+import { USER_ROLES_ENUM } from "../../../constants.js";
 
 const router = express.Router();
 

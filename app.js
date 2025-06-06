@@ -22,7 +22,7 @@ app.use(
             "http://localhost:8080",
             "http://localhost:8081",
           ]
-        : "*",
+        : ["https://wander-trip-admin.vercel.app"],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"], // Specify allowed HTTP methods
     allowedHeaders: ["Content-Type", "Authorization"], // Specify allowed headers
     credentials: true,
